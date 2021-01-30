@@ -4,10 +4,12 @@ Created on Fri Jan 29 11:39:53 2021
 
 @author: ayman
 """
+import argparse
 import random
 import numpy as np
-from lib import game, mcts, model
+from lib import mcts, model
 from typing import Optional, List, Tuple
+from lib.game import game
 
 
 def get_action(game, net, mcts_, cur_state,cur_player, search_depth, batch_size):
@@ -17,11 +19,11 @@ def get_action(game, net, mcts_, cur_state,cur_player, search_depth, batch_size)
     mcts_.search_batch(search_depth, batch_size, cur_state, cur_player, net)
     prob, _ = mcts_.get_policy_value(cur_state)
     return int(np.argmax(prob))
-    
+
 
 
 def play(net1,net2=None,mcts_store=None, batch_size=16,
-         search_depth=10,steps_before_tau=10,device='cpu'):   
+         search_depth=10,steps_before_tau=10,device='cpu'):
     if net2 is None:
         print('*'*10,' Human vs Computer', '*'*10)
         print('\t    You are the Black player  \n')
@@ -49,5 +51,11 @@ def play(net1,net2=None,mcts_store=None, batch_size=16,
             print(f'Player {cur_player} wins')
             break
         cur_player = 1-cur_player
-        
-    
+
+
+if __name__=='__main__':
+    parser = argparse.PARSER()
+    parser.add_argument('-net1', default=None, help='path to net1 dict_state')
+    args = parser.parse_args()
+    net = model.Net()
+    play(net)

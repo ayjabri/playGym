@@ -3,7 +3,7 @@ Connect 4 Game
 """
 import random
 
-class Connect:
+class Connect4(object):
     def __init__(self, rows=6, cols=7, bits_in_len=3, count_to_win=4):
         self.rows = rows
         self.cols = cols
@@ -14,14 +14,14 @@ class Connect:
         self.white_player = 0
         self.black_player = 1
         self.init_state_list = [[] for _ in range(self.cols)]
-        self.init_state = self.encode_lists(self.init_state_list)        
+        self.init_state = self.encode_lists(self.init_state_list)
         self.reset()
-        
+
     def reset(self):
         self.cur_state = None
         self.children = {}
         self.steps = 0
-    
+
     def expand_children(self, state_int, player):
         children = []
         valid_moves = self.possible_moves(state_int)
@@ -29,21 +29,21 @@ class Connect:
             child,_ = self.move(state_int, move, player)
             children.append((move, child))
         return children
-    
+
     def bits_to_int(self,bits):
         res = 0
         for b in bits:
             res *= 2
             res += b
         return res
-    
+
     def int_to_bits(self, num, bits):
         res = []
         for _ in range(bits):
             res.append(num % 2)
             num //= 2
         return res[::-1]
-    
+
     def encode_lists(self, field_lists):
         """
         Encode lists representation into the binary numbers
@@ -52,7 +52,7 @@ class Connect:
         """
         assert isinstance(field_lists, list)
         assert len(field_lists) == self.cols
-    
+
         bits = []
         len_bits = []
         for col in field_lists:
@@ -61,7 +61,7 @@ class Connect:
             bits.extend([0] * free_len)
             len_bits.extend(self.int_to_bits(free_len, bits=self.bits_in_len))
         bits.extend(len_bits)
-        return self.bits_to_int(bits)    
+        return self.bits_to_int(bits)
 
 
     def decode_binary(self, state_int):
@@ -82,7 +82,7 @@ class Connect:
             res.append(vals)
         return res
 
-    
+
     def possible_moves(self, state_int):
         """
         This function could be calculated directly from bits, but I'm too lazy
@@ -92,7 +92,7 @@ class Connect:
         assert isinstance(state_int, int)
         field = self.decode_binary(state_int)
         return [idx for idx, col in enumerate(field) if len(col) < self.rows]
-        
+
 
     def _check_won(self, field, col, delta_row):
         """
@@ -128,10 +128,10 @@ class Connect:
                 return True
             cur_coord += delta_row
         return False
-    
+
     def check_draw(self, state_int):
         valid_moves = self.possible_moves(state_int)
-        return valid_moves == 0 
+        return valid_moves == 0
 
     def move(self, state_int, col, player):
         """
@@ -166,7 +166,7 @@ class Connect:
                 row_idx = self.rows - rev_row_idx - 1
                 data[row_idx][col_idx] = str(cell)
         return data
-    
+
     def play_random(self):
         cur_state = self.init_state
         cur_player = random.choice([self.white_player, self.black_player])
@@ -186,15 +186,16 @@ class Connect:
                 break
             cur_player  = 1 - cur_player
         return cur_state
-    
+
     def print_board(self, state_int):
         state = self.render(state_int)
+        print('='*(1+self.rows*2))
         print(' '.join(str(x) for x in range(self.cols)))
         for y in range(self.rows):
             print(' '.join(state[y][x] for x in range(self.cols)))
-                    
-  
 
-if __name__=='__main__':
-    connect4 = Connect()
-    
+
+
+
+game = Connect4()
+
