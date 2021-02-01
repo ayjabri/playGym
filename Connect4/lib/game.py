@@ -2,7 +2,6 @@
 Connect 4 Game
 """
 import random
-import numpy as np
 from lib.utils import Experience
 from lib.cylib import functions_cy as cy
 
