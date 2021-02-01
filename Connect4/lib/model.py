@@ -4,9 +4,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from lib import game, mcts
+from lib import mcts
+from lib.game import game
 
-game = game.Connect()
+
 OBS_SHAPE = (2, game.rows, game.cols)
 NUM_FILTERS = 64
 

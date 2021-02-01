@@ -15,8 +15,15 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class Net(nn.Module):
-    def __init__(self, obs_shape=(6, 7), players=2, history=4, filters=64):
+class ResNet(nn.Module):
+    """
+    Residual network to play connect4. Consists of:
+        input layer   
+        3xresidual layers   
+        value head: probability of winning    
+        policy head: prior probability     
+    """
+    def __init__(self, obs_shape=(6,7), players=2, history=4, filters=64):
         super().__init__()
 
         self.obs_shape = obs_shape
@@ -61,18 +68,19 @@ class Net(nn.Module):
                                    nn.Linear(256, 1),
                                    nn.Sigmoid())
 
+        # Policy head -> prio probability of best action -> P(s,a)
         self.policy = nn.Sequential(nn.Linear(fc_input_size, 256),
                                     nn.LeakyReLU(),
                                     nn.Linear(256, self.obs_shape[1]))
 
     def _forward(self, x):
         y = self.input(x)
-        output = y + self.layer1(y)
-        F.leaky_relu_(output)
-        output = y + self.layer2(y)
-        F.leaky_relu_(output)
-        output = y + self.layer3(y)
-        return F.leaky_relu_(output)
+        y = y + self.layer1(y)
+        F.leaky_relu_(y)
+        y = y + self.layer2(y)
+        F.leaky_relu_(y)
+        y = y + self.layer3(y)
+        return F.leaky_relu_(y)
 
     def _conv_output_shape(self):
         o = torch.zeros(1, self.input_shape, *self.obs_shape)
