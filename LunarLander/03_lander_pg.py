@@ -14,10 +14,13 @@ Actor critic.
 Solving Lunar lander using Policy Gradient method:
     Network: Simple 2 layers with one output returning mu
     Observations: fresh episodes from ptan experience-source (must complete full episode to start training)
-    Rewards: discounted using ptan STEPS = 10 then scale using frame_idx 
+    Rewards: discounted using ptan STEPS = 10 then scale using frame_idx
     Loss is the sum of:
         1- Policy Loss:is the negative mean log of probability (log_soft), multiplied by discounted rewards
         2- Entropy Loss: the sum of probabilities times log_prob, then take the negative average of that
+                        (Entropy meausres the level of uncertainty. The bigger it is the more certain the
+                         agent is in its actions. Taking the negative value of it and adding it to our policy-
+                         loss acts as if we are punishing the agent for being too certain of its actions
 """
 
 import torch
@@ -42,7 +45,7 @@ class Net(nn.Module):
                                    nn.ReLU(),
                                    nn.Linear(256, n_actions)
                                    )
-        
+
     def forward(self, x):
         return self.layer(x)
 
@@ -69,15 +72,15 @@ def play(env,agent):
         if done:
             print(rewards)
             break
-    env.close()  
-   
+    env.close()
+
 # =============================================================================
 # Hyperparameters
 # =============================================================================
 GAMMA = 0.99
-LR = 1e-3
-SOLVE = 150
-ENTROPY_BETA = 0.01
+LR = 1e-2
+SOLVE = 195
+ENTROPY_BETA = 0.02
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
@@ -91,9 +94,9 @@ if __name__=='__main__':
     net = Net(env.observation_space.shape[0], env.action_space.n)
     agent = ptan.agent.PolicyAgent(net, apply_softmax=True, preprocessor=ptan.agent.float32_preprocessor)
     exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, GAMMA, steps_count=args.steps)
-    
+
     optimizer = torch.optim.Adam(net.parameters(), lr=LR)
-    
+
     batch_s, batch_a, batch_r, batch_qval = [],[],[],[]
     total_rewards =[]
     episode = 0
@@ -124,11 +127,11 @@ if __name__=='__main__':
                 if args.save: torch.save(net.state_dict(),fname)
                 if args.play: play(env,agent)
                 break
-        
+
         if episode < args.episodes:
             continue
         epoch += 1
-        
+
         state_v = torch.FloatTensor(batch_s)
         act_v = torch.LongTensor(batch_a)
         qval_v = torch.FloatTensor(batch_qval)
@@ -138,15 +141,15 @@ if __name__=='__main__':
         log_prob_v = F.log_softmax(logit_v, dim=1)
         log_prob_a_v = log_prob_v[range(len(act_v)),act_v]
         policy_loss = - (log_prob_a_v * qval_v).mean()
-        
-        prob_v = F.softmax(logit_v, dim=1)
-        entropy = (prob_v * log_prob_v).sum(dim=1).mean()
-        entropy_loss =  ENTROPY_BETA * entropy
-        
-        loss = policy_loss + entropy_loss
+
+        # prob_v = F.softmax(logit_v, dim=1)
+        # entropy = (prob_v * log_prob_v).sum(dim=1).mean()
+        # entropy_loss =  ENTROPY_BETA * entropy
+
+        loss = policy_loss# + entropy_loss
         loss.backward()
         optimizer.step()
-        
+
         batch_s.clear()
         batch_a.clear()
         batch_r.clear()
